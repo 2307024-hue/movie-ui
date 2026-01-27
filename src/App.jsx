@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2'; 
 
-// Konfigurasi API Lokal
 const apiLokal = axios.create({
   baseURL: 'http://localhost:8000',
   withCredentials: true,
@@ -13,13 +13,137 @@ const App = () => {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [view, setView] = useState('login');
+  const [showPw, setShowPw] = useState(false); 
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', password_confirmation: '', remember: false });
+  const [isNewUser, setIsNewUser] = useState(false);
   useEffect(() => {
     fetchPublicMovies();
     checkLogin();
   }, []);
+
+  const checkLogin = async () => {
+    try {
+      const res = await apiLokal.get('/api/user');
+      setUser(res.data);
+      setView('dashboard');
+      fetchFavorites();
+    } catch (e) { setUser(null); }
+  };
+
+  const handleAuth = async (e, type) => {
+  e.preventDefault();
+  
+  // Validasi PW minimal 8
+  if (formData.password.length < 8) {
+    return Swal.fire('Waduh!', 'Password minimal 8 karakter!', 'warning');
+  }
+
+  try {
+    await apiLokal.get('/sanctum/csrf-cookie');
+    const endpoint = type === 'register' ? '/register' : '/login';
+    await apiLokal.post(endpoint, formData);
+    
+    if (type === 'register') {
+      // KUNCI STATUS: Dia baru saja daftar!
+      setIsNewUser(true); 
+      
+      Swal.fire({
+        title: 'Berhasil Daftar!',
+        text: 'Akun barumu sudah siap. Yuk, masuk sekarang!',
+        icon: 'success',
+        confirmButtonColor: '#00d2ff'
+      });
+      setView('login'); // Pindah ke halaman login
+    } else {
+      // SAAT LOGIN: Cek apakah dia datang dari jalur "Daftar" atau tidak
+      checkLogin();
+
+      // Jika isNewUser true = Baru Daftar. Jika false = Sudah ada akun (User Lama)
+      const titleMsg = isNewUser ? 'Halo, Anggota Baru! 🥳' : 'Selamat Datang Kembali! 👋';
+      const textMsg = isNewUser 
+        ? 'Akunmu aktif. Selamat mulai mengoleksi film!' 
+        : 'Senang melihatmu lagi di Movie Portal.';
+
+      Swal.fire({ 
+        title: titleMsg, 
+        text: textMsg, 
+        icon: 'success', 
+        timer: 3000, 
+        showConfirmButton: false 
+      });
+
+      // PENTING: Reset jadi false setelah login sukses agar tidak tertukar nanti
+      setIsNewUser(false); 
+    }
+  } catch (err) {
+    Swal.fire('Gagal!', 'Data tidak cocok atau database belum nyala.', 'error');
+  }
+};
+  const handleLogout = async () => {
+    try {
+      // 1. Tunggu Laravel menghapus session di server
+      await apiLokal.post('/logout');
+
+      // 2. Tampilkan pesan sukses yang elegan
+      await Swal.fire({
+        title: 'Berhasil Keluar',
+        text: 'Sampai jumpa lagi!',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (e) {
+      console.error("Gagal Logout", e);
+    } finally {
+      // 3. Hapus data user di React & paksa refresh ke halaman login
+      setUser(null);
+      setView('login');
+      window.location.href = '/';
+    }
+  };
+
+  const fetchFavorites = async () => {
+    try {
+      const res = await apiLokal.get('/api/movies');
+      setFavorites(res.data);
+    } catch (e) { console.log("Gagal sinkron data"); }
+  };
+
+  const updateNote = async (id, currentNote) => {
+    const { value: text } = await Swal.fire({
+      title: 'Tulis Catatan',
+      input: 'textarea',
+      inputValue: (currentNote === "Belum ada catatan" || !currentNote) ? "" : currentNote,
+      inputPlaceholder: 'Apa pendapatmu tentang film ini...',
+      showCancelButton: true,
+      confirmButtonColor: '#3a7bd5'
+    });
+
+    if (text !== undefined) {
+      try {
+        await apiLokal.put(`/api/movies/${id}`, { notes: text });
+        fetchFavorites();
+        Swal.fire({ title: 'Tersimpan!', icon: 'success', timer: 1000, showConfirmButton: false });
+      } catch (e) { Swal.fire('Error', 'Gagal simpan', 'error'); }
+    }
+  };
+
+  const deleteFavorite = async (id) => {
+    const result = await Swal.fire({
+      title: 'Hapus film?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e74c3c',
+      confirmButtonText: 'Ya, Hapus!'
+    });
+
+    if (result.isConfirmed) {
+      await apiLokal.delete(`/api/movies/${id}`);
+      fetchFavorites();
+      Swal.fire('Terhapus!', 'Film dibuang dari koleksi.', 'success');
+    }
+  };
 
   const fetchPublicMovies = async () => {
     try {
@@ -34,110 +158,40 @@ const App = () => {
     }
   };
 
-  const checkLogin = async () => {
-    try {
-      const res = await apiLokal.get('/api/user');
-      setUser(res.data);
-      setView('dashboard');
-      fetchFavorites();
-    } catch (e) { setUser(null); }
-  };
-
-  const handleAuth = async (e, type) => {
-    e.preventDefault();
-    try {
-      await apiLokal.get('/sanctum/csrf-cookie');
-      const endpoint = type === 'register' ? '/register' : '/login';
-      await apiLokal.post(endpoint, formData);
-      if (type === 'register') {
-        alert("Pendaftaran Berhasil! Silakan Login.");
-        setView('login');
-      } else {
-        checkLogin();
-      }
-    } catch (err) {
-      alert("Gagal! Cek database atau email sudah terdaftar.");
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await apiLokal.post('/logout');
-      setUser(null);
-      setView('login');
-      window.location.reload(); 
-    } catch (e) { 
-      setUser(null); 
-      setView('login'); 
-    }
-  };
-
-  const fetchFavorites = async () => {
-    try {
-      const res = await apiLokal.get('/api/movies');
-      setFavorites(res.data);
-    } catch (e) { 
-      console.log("Gagal ambil koleksi");
-    }
-  };
-
-  const addFavorite = async (m) => {
-    try {
-      await apiLokal.post('/api/movies', { 
-        tmdb_id: m.id, 
-        title: m.title, 
-        poster_path: m.poster_path 
-      });
-      fetchFavorites();
-    } catch (e) { 
-      alert("Sudah ada di koleksi atau database error!");
-      fetchFavorites();
-    }
-  };
-
-  const updateNote = async (id, currentNote) => {
-  const newNote = prompt("Masukkan Catatan Baru:", currentNote || "");
-
-  if (newNote !== null && newNote.trim() !== "") {
-    try {
-      // Laravel butuh 'notes', bukan 'personal_notes'
-      await apiLokal.put(`/api/movies/${id}`, { notes: newNote }); 
-      alert("Catatan berhasil disimpan!");
-      fetchFavorites(); // Wajib panggil ini supaya UI ter-update
-    } catch (e) {
-      alert("Gagal menyimpan ke database. Cek koneksi Laravel.");
-    }
-  }
-};
-
-  const deleteFavorite = async (id) => {
-    if (confirm("Hapus film ini?")) {
-      try {
-        await apiLokal.delete(`/api/movies/${id}`);
-        fetchFavorites();
-      } catch (e) { alert("Gagal hapus!"); }
-    }
-  };
-
-  const filteredMovies = movies.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase()));
-
   if (!user) {
     return (
       <div style={styles.authContainer}>
         <div style={styles.authCard}>
-          <h2 style={{textAlign:'center', color:'#00d2ff'}}>🎬 MOVIE PORTAL</h2>
+          <h2 style={{textAlign:'center', color:'#00d2ff', marginBottom:'30px'}}>🎬 MOVIE PORTAL</h2>
           <form onSubmit={(e) => handleAuth(e, view)}>
             {view === 'register' && (
               <input style={styles.input} type="text" placeholder="Nama Lengkap" onChange={e => setFormData({...formData, name: e.target.value})} required />
             )}
             <input style={styles.input} type="email" placeholder="Email" onChange={e => setFormData({...formData, email: e.target.value})} required />
-            <input style={styles.input} type="password" placeholder="Password" onChange={e => setFormData({...formData, password: e.target.value})} required />
+            
+            <div style={{position: 'relative'}}>
+              <input 
+                style={styles.input} 
+                type={showPw ? "text" : "password"} 
+                placeholder="Password (Min. 8 Karakter)" 
+                onChange={e => setFormData({...formData, password: e.target.value, password_confirmation: e.target.value})} required 
+              />
+              <span onClick={() => setShowPw(!showPw)} style={styles.eyeIcon}>
+                {showPw ? '🙈' : '👁️'}
+              </span>
+            </div>
+
+            <div style={styles.rememberRow}>
+              <input type="checkbox" id="rem" onChange={e => setFormData({...formData, remember: e.target.checked})} />
+              <label htmlFor="rem">Ingat Saya</label>
+            </div>
+
             <button style={styles.btnPrimary} type="submit">
               {view === 'login' ? 'MASUK' : 'DAFTAR SEKARANG'}
             </button>
           </form>
           <p onClick={() => setView(view === 'login' ? 'register' : 'login')} style={styles.switchText}>
-            {view === 'login' ? 'Belum punya akun? Daftar di sini' : 'Sudah punya akun? Login'}
+            {view === 'login' ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Login'}
           </p>
         </div>
       </div>
@@ -156,21 +210,25 @@ const App = () => {
 
       <div style={styles.mainLayout}>
         <div style={styles.leftCol}>
-          <h3 style={styles.secTitle}>🎞️ Katalog Film Populer</h3>
+          <h3 style={styles.secTitle}>🎞️ Katalog Populer</h3>
           <div style={styles.movieGrid}>
-            {filteredMovies.map(m => (
+            {movies.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase())).map(m => (
               <div key={m.id} style={styles.movieCard}>
                 <img src={`https://image.tmdb.org/t/p/w200${m.poster_path}`} style={styles.posterImg} alt={m.title} />
-                <div style={{padding:'10px'}}>
+                <div style={{padding:'12px'}}>
                   <p style={styles.titleText}>{m.title}</p>
-                  <button onClick={() => addFavorite(m)} style={styles.btnSave}>⭐ Simpan</button>
+                  <button onClick={() => {
+                    apiLokal.post('/api/movies', { tmdb_id: m.id, title: m.title, poster_path: m.poster_path })
+                    .then(() => { fetchFavorites(); Swal.fire({title: 'Disimpan!', icon: 'success', timer: 800, showConfirmButton: false}); })
+                    .catch(() => Swal.fire('Info', 'Sudah ada di koleksi!', 'info'));
+                  }} style={styles.btnSave}>⭐ Simpan</button>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-<div style={styles.rightCol}>
+        <div style={styles.rightCol}>
   <h3 style={styles.secTitle}>📂 Koleksi Saya (HeidiSQL)</h3>
   {favorites.map(f => {
     // Logika pengecekan catatan agar tombol dinamis (Hijau/Orange)
@@ -214,30 +272,32 @@ const App = () => {
       </div>
     </div>
   );
-} 
+};
 
 const styles = {
-  authContainer: { width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#0f0c29' },
-  authCard: { background: 'rgba(255,255,255,0.08)', padding: '40px', borderRadius: '15px', width: '350px' },
+  authContainer: { width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' },
+  authCard: { background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '20px', width: '380px' },
+  input: { width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: 'none', background: 'rgba(0,0,0,0.2)', color: '#fff', boxSizing: 'border-box' },
+  eyeIcon: { position: 'absolute', right: '15px', top: '12px', cursor: 'pointer', fontSize: '18px' },
+  rememberRow: { marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '13px' },
+  btnPrimary: { width: '100%', padding: '12px', background: '#00d2ff', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
   dashboardFull: { width: '100vw', minHeight: '100vh', background: '#0f0c29', color: '#fff', padding: '20px', boxSizing: 'border-box' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px', marginBottom: '20px' },
-  searchBox: { padding: '10px', borderRadius: '8px', border: 'none', width: '250px', background: '#fff' },
-  mainLayout: { display: 'flex', gap: '20px', width: '100%' },
-  leftCol: { flex: 3, background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '15px' },
-  rightCol: { flex: 1, background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '15px', minWidth: '300px' },
-  movieGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' },
-  movieCard: { background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' },
-  posterImg: { width: '100%', height: '220px', objectFit: 'cover' },
-  titleText: { fontSize: '12px', fontWeight: 'bold', height: '30px', overflow: 'hidden' },
-  btnSave: { width: '100%', background: '#00d2ff', border: 'none', padding: '8px', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer', color: '#000' },
-  favBox: { background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '10px', marginBottom: '10px', borderLeft: '4px solid #00d2ff' },
-  noteBox: { fontSize: '11px', color: '#ccc', marginTop: '5px' },
-  btnSmall: { padding: '8px 12px', border: 'none', borderRadius: '5px', color: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
-  input: { width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: 'none', boxSizing: 'border-box', color: '#000' },
-  btnPrimary: { width: '100%', padding: '12px', background: '#3a7bd5', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
-  btnLogout: { background: '#e74c3c', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer' },
-  switchText: { textAlign: 'center', marginTop: '15px', cursor: 'pointer', color: '#00d2ff', fontSize: '13px' },
-  secTitle: { marginTop: 0, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', marginBottom: '15px' }
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 25px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px', marginBottom: '25px' },
+  mainLayout: { display: 'flex', gap: '25px' },
+  leftCol: { flex: 3 },
+  rightCol: { flex: 1, background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '15px' },
+  movieGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '20px' },
+  movieCard: { background: 'rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden' },
+  posterImg: { width: '100%', height: '230px', objectFit: 'cover' },
+  titleText: { fontSize: '13px', fontWeight: 'bold', marginBottom: '10px' },
+  btnSave: { width: '100%', background: 'rgba(0,210,255,0.2)', color: '#00d2ff', border: '1px solid #00d2ff', padding: '8px', borderRadius: '6px', cursor: 'pointer' },
+  favBox: { background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '15px', borderLeft: '4px solid #00d2ff' },
+  noteBox: { fontSize: '12px', marginTop: '8px', color: '#ccc' },
+  btnSmall: { padding: '6px 12px', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
+  btnLogout: { background: '#ff4b2b', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', cursor: 'pointer' },
+  searchBox: { padding: '10px 15px', borderRadius: '8px', border: 'none', width: '280px', background: 'rgba(255,255,255,0.1)', color: '#fff' },
+  switchText: { textAlign: 'center', marginTop: '20px', cursor: 'pointer', color: '#00d2ff', fontSize: '14px' },
+  secTitle: { marginBottom: '20px', fontSize: '18px', borderLeft: '4px solid #00d2ff', paddingLeft: '10px' }
 };
 
 export default App;
