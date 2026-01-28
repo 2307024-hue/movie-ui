@@ -51,7 +51,7 @@ const App = () => {
       } else {
         checkLogin();
         const titleMsg = isNewUser ? 'Halo, Anggota Baru! 🥳' : 'Selamat Datang Kembali! 👋';
-        const textMsg = isNewUser ? 'Akunmu aktif. Selamat mulai mengoleksi film!' : 'Senang melihatmu lagi di Movie Portal.';
+        const textMsg = isNewUser ? 'Akunmu aktif. Selamat mulai mengoleksi film!' : 'Senang melihatmu lagi di YaraFilm.';
         Swal.fire({ title: titleMsg, text: textMsg, icon: 'success', timer: 3000, showConfirmButton: false });
         setIsNewUser(false); 
       }
@@ -100,7 +100,7 @@ const App = () => {
 
   const updateNote = async (id, currentNote) => {
     const { value: text } = await Swal.fire({
-      title: 'Tulis Catatan',
+      title: 'Tulis kesanmu tentang film ini...',
       input: 'textarea',
       inputValue: (currentNote === "Belum ada catatan" || !currentNote) ? "" : currentNote,
       showCancelButton: true,
@@ -146,6 +146,25 @@ const App = () => {
   const handleNavClick = (tab) => {
     setActiveTab(tab);
     // Kamu bisa tambahkan logika fetch data spesifik di sini
+  };
+
+  // Fungsi untuk mendapatkan film berdasarkan tab dan pencarian
+  const getDisplayMovies = () => {
+    let filtered = movies;
+
+    // 1. Logika Tab
+    if (activeTab === 'trending') {
+      filtered = movies.filter(m => parseFloat(m.rating) >= 8.0);
+    }
+
+    // 2. Logika Cari (Filter berdasarkan teks input)
+    if (searchTerm) {
+      filtered = filtered.filter(m =>
+        m.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
   };
 
   if (view === 'login' || view === 'register') {
@@ -211,34 +230,45 @@ const App = () => {
       {/* --- DASHBOARD CONTENT --- */}
       <header style={styles.header}>
         <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
-          {/* Nama Project Kamu */}
-          <h1 style={styles.logo}>Yara<span style={{color: '#fff', fontWeight: 'normal'}}>Film</span></h1>
+          {/* Nama Project Tegas */}
+          <h1 style={styles.logo}>Yara<span style={{color: '#fff'}}>Film</span></h1>
 
-          {/* Navigasi yang berfungsi */}
           <nav style={styles.navLinks}>
             <span
-              onClick={() => handleNavClick('home')}
+              onClick={() => setActiveTab('home')}
               style={activeTab === 'home' ? styles.activeLink : styles.inactiveLink}
             >Home</span>
             <span
-              onClick={() => handleNavClick('trending')}
+              onClick={() => setActiveTab('trending')}
               style={activeTab === 'trending' ? styles.activeLink : styles.inactiveLink}
             >Trending</span>
           </nav>
         </div>
 
-        <div style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
-          <input style={styles.searchBox} placeholder="Cari film..." />
+        <div style={{display: 'flex', gap: '20px', alignItems: 'center'}}>
+          {/* Input Cari */}
+          <input
+            style={styles.searchBox}
+            placeholder="Cari film..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-          {!user ? (
+          {user ? (
+            <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+              {/* Nama User Ditegaskan */}
+              <span style={styles.userNameDisplay}>
+                HALO, {user.name.toUpperCase()} 👋
+              </span>
+              {/* Tombol Keluar Merah */}
+              <button onClick={handleLogout} style={styles.btnKeluar}>
+                KELUAR
+              </button>
+            </div>
+          ) : (
             <button onClick={() => setView('login')} style={styles.btnMasuk}>
               Masuk/Daftar
             </button>
-          ) : (
-            <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-              <span style={{fontSize: '14px'}}>Halo, {user.name}</span>
-              <button onClick={handleLogout} style={styles.btnSmall}>Keluar</button>
-            </div>
           )}
         </div>
       </header>
@@ -247,7 +277,8 @@ const App = () => {
         <div style={styles.leftCol}>
           <h3 style={styles.secTitle}>🎞️ Katalog Populer</h3>
           <div style={styles.movieGrid}>
-            {movies.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase())).map(m => (
+            {getDisplayMovies()
+              .map(m => (
               <div key={m.id} style={styles.movieCard} onClick={() => setSelectedMovie(m)}>
                 <img src={m.poster_path} style={styles.posterImg} alt={m.title} />
                 <div style={{padding:'12px'}}>
@@ -313,9 +344,61 @@ const styles = {
   btnSmall: { padding: '6px 10px', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '11px' },
   btnLogout: { background: '#ff4b2b', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', cursor: 'pointer' },
   btnLoginNav: { background: '#ff4b2b', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', cursor: 'pointer' },
-  logo: { fontSize: '28px', fontWeight: 'bold', color: '#ff4b2b', margin: 0 },
+  logo: {
+    color: '#ff4b2b',
+    fontSize: '28px',
+    fontWeight: '900',
+    letterSpacing: '1px'
+  },
   navLinks: { display: 'flex', gap: '20px', fontSize: '16px', color: '#fff' },
-  searchBox: { padding: '10px 15px', borderRadius: '8px', border: 'none', width: '280px', background: 'rgba(255,255,255,0.1)', color: '#fff' },
+  activeLink: {
+    color: '#ff4b2b',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    borderBottom: '2px solid #ff4b2b',
+    paddingBottom: '5px'
+  },
+  inactiveLink: {
+    color: '#fff',
+    cursor: 'pointer',
+    opacity: 0.6
+  },
+  searchBox: {
+    background: '#1a1a1a',
+    color: '#fff',
+    border: '1px solid #333',
+    padding: '10px 20px',
+    borderRadius: '25px',
+    width: '220px',
+    outline: 'none'
+  },
+  userNameDisplay: {
+    fontSize: '14px',
+    fontWeight: '800', // Sangat tebal
+    color: '#fff',
+    letterSpacing: '0.5px',
+    borderRight: '2px solid #333', // Pemberi sekat biar rapi
+    paddingRight: '15px'
+  },
+  btnKeluar: {
+    background: '#ff0000', // Merah murni/tegas
+    color: '#fff',
+    border: 'none',
+    padding: '8px 18px',
+    borderRadius: '5px',
+    fontWeight: '900',
+    cursor: 'pointer',
+    fontSize: '12px'
+  },
+  btnMasuk: {
+    background: '#ff4b2b',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 25px',
+    borderRadius: '25px',
+    fontWeight: 'bold',
+    cursor: 'pointer'
+  },
   switchText: { textAlign: 'center', marginTop: '20px', cursor: 'pointer', color: '#00d2ff', fontSize: '14px' },
   secTitle: { marginBottom: '20px', fontSize: '18px', borderLeft: '4px solid #00d2ff', paddingLeft: '10px' },
   modalBackdrop: { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 },
