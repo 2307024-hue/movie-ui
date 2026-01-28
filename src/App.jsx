@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2'; 
 
+
 const apiLokal = axios.create({
   baseURL: 'http://localhost:8000',
   withCredentials: true,
@@ -12,12 +13,13 @@ const App = () => {
   const [movies, setMovies] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
-  const [view, setView] = useState('login');
+  const [view, setView] = useState('dashboard');
   const [showPw, setShowPw] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ name: '', email: '', password: '', password_confirmation: '', remember: false });
   const [isNewUser, setIsNewUser] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
     fetchPublicMovies();
@@ -122,7 +124,31 @@ const App = () => {
     }
   };
 
-  if (!user) {
+  // Fungsi Helper untuk Proteksi
+  const protectedAction = (action) => {
+    if (!user) {
+      Swal.fire({
+        title: 'Login Dulu Yuk!',
+        text: 'Kamu harus masuk untuk menikmati fitur ini.',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Login Sekarang',
+        confirmButtonColor: '#ff4b2b'
+      }).then((result) => {
+        if (result.isConfirmed) setView('login');
+      });
+      return;
+    }
+    action();
+  };
+
+  // Fungsi untuk navigasi yang berfungsi
+  const handleNavClick = (tab) => {
+    setActiveTab(tab);
+    // Kamu bisa tambahkan logika fetch data spesifik di sini
+  };
+
+  if (view === 'login' || view === 'register') {
     return (
       <div style={styles.authContainer}>
         <div style={styles.authCard}>
@@ -133,13 +159,16 @@ const App = () => {
             )}
             <input style={styles.input} type="email" placeholder="Email" onChange={e => setFormData({...formData, email: e.target.value})} required />
             <div style={{position: 'relative'}}>
-              <input 
-                style={styles.input} 
-                type={showPw ? "text" : "password"} 
-                placeholder="Password (Min. 8 Karakter)" 
-                onChange={e => setFormData({...formData, password: e.target.value, password_confirmation: e.target.value})} required 
+              <input
+                style={styles.input}
+                type={showPw ? "text" : "password"}
+                placeholder="Password (Min. 8 Karakter)"
+                onChange={e => setFormData({...formData, password: e.target.value, password_confirmation: e.target.value})} required
               />
-              <span onClick={() => setShowPw(!showPw)} style={styles.eyeIcon}>{showPw ? '🙈' : '👁️'}</span>
+              <span onClick={() => setShowPw(!showPw)} style={styles.eyeIcon}>
+  {showPw ? '👁' : '⌣'}
+</span>
+
             </div>
             <button style={styles.btnPrimary} type="submit">{view === 'login' ? 'MASUK' : 'DAFTAR SEKARANG'}</button>
           </form>
@@ -181,10 +210,36 @@ const App = () => {
 
       {/* --- DASHBOARD CONTENT --- */}
       <header style={styles.header}>
-        <h2 style={{margin:0}}>Halo, {user.name} 👋</h2>
-        <div style={{display:'flex', gap:'15px'}}>
-          <input style={styles.searchBox} type="text" placeholder="Cari film..." onChange={(e) => setSearchTerm(e.target.value)} />
-          <button onClick={handleLogout} style={styles.btnLogout}>Logout</button>
+        <div style={{display: 'flex', alignItems: 'center', gap: '30px'}}>
+          {/* Nama Project Kamu */}
+          <h1 style={styles.logo}>Yara<span style={{color: '#fff', fontWeight: 'normal'}}>Film</span></h1>
+
+          {/* Navigasi yang berfungsi */}
+          <nav style={styles.navLinks}>
+            <span
+              onClick={() => handleNavClick('home')}
+              style={activeTab === 'home' ? styles.activeLink : styles.inactiveLink}
+            >Home</span>
+            <span
+              onClick={() => handleNavClick('trending')}
+              style={activeTab === 'trending' ? styles.activeLink : styles.inactiveLink}
+            >Trending</span>
+          </nav>
+        </div>
+
+        <div style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
+          <input style={styles.searchBox} placeholder="Cari film..." />
+
+          {!user ? (
+            <button onClick={() => setView('login')} style={styles.btnMasuk}>
+              Masuk/Daftar
+            </button>
+          ) : (
+            <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+              <span style={{fontSize: '14px'}}>Halo, {user.name}</span>
+              <button onClick={handleLogout} style={styles.btnSmall}>Keluar</button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -202,9 +257,11 @@ const App = () => {
                   </p>
                   <button onClick={(e) => {
                     e.stopPropagation(); // Mencegah modal terbuka saat klik simpan
-                    apiLokal.post('/api/movies', { tmdb_id: m.id, title: m.title, poster_path: m.poster_path })
-                    .then(() => { fetchFavorites(); Swal.fire({title: 'Disimpan!', icon: 'success', timer: 800, showConfirmButton: false}); })
-                    .catch(() => Swal.fire('Info', 'Sudah ada di koleksi!', 'info'));
+                    protectedAction(() => {
+                      apiLokal.post('/api/movies', { tmdb_id: m.id, title: m.title, poster_path: m.poster_path })
+                      .then(() => { fetchFavorites(); Swal.fire({title: 'Disimpan!', icon: 'success', timer: 800, showConfirmButton: false}); })
+                      .catch(() => Swal.fire('Info', 'Sudah ada di koleksi!', 'info'));
+                    });
                   }} style={styles.btnSave}>⭐ Simpan</button>
                 </div>
               </div>
@@ -224,7 +281,7 @@ const App = () => {
                 </div>
                 <div style={{marginTop:'12px', display:'flex', gap:'8px'}}>
                   <button onClick={() => updateNote(f.id, f.notes)} style={{...styles.btnSmall, background: hasNote ? '#f39c12' : '#27ae60'}}>{hasNote ? 'Update' : 'Tambah'}</button>
-                  <button onClick={() => deleteFavorite(f.id)} style={{...styles.btnSmall, background:'#e74c3c'}}>🗑️</button>
+                  <button onClick={() => deleteFavorite(f.id)} style={{...styles.btnSmall, background:'#e74c3c'}}>🗑️Hapus</button>
                 </div>
               </div>
             );
@@ -255,6 +312,9 @@ const styles = {
   noteBox: { fontSize: '11px', marginTop: '8px', color: '#ccc' },
   btnSmall: { padding: '6px 10px', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '11px' },
   btnLogout: { background: '#ff4b2b', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', cursor: 'pointer' },
+  btnLoginNav: { background: '#ff4b2b', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '8px', cursor: 'pointer' },
+  logo: { fontSize: '28px', fontWeight: 'bold', color: '#ff4b2b', margin: 0 },
+  navLinks: { display: 'flex', gap: '20px', fontSize: '16px', color: '#fff' },
   searchBox: { padding: '10px 15px', borderRadius: '8px', border: 'none', width: '280px', background: 'rgba(255,255,255,0.1)', color: '#fff' },
   switchText: { textAlign: 'center', marginTop: '20px', cursor: 'pointer', color: '#00d2ff', fontSize: '14px' },
   secTitle: { marginBottom: '20px', fontSize: '18px', borderLeft: '4px solid #00d2ff', paddingLeft: '10px' },
