@@ -20,11 +20,49 @@ const App = () => {
   const [isNewUser, setIsNewUser] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedGenre, setSelectedGenre] = useState('All');
+  const itemsPerPage = 20; // Lu bisa atur mau berapa film per halaman
+
+  // Tambahkan daftar genre yang tersedia di TVMaze
+  const genresList = ['All', 'Action', 'Drama', 'Comedy', 'Sci-Fi', 'Horror', 'Romance', 'Adventure'];
+
+  // Fungsi Helper untuk merapikan data (biar gak nulis berulang)
+  const adaptData = (data) => {
+    return data.map(s => ({
+      id: s.id || s.show?.id,
+      title: s.name || s.show?.name,
+      poster_path: s.image?.original || s.show?.image?.original || s.image?.medium || s.show?.image?.medium,
+      summary: s.summary || s.show?.summary,
+      genres: s.genres || s.show?.genres,
+      rating: s.rating?.average || s.show?.rating?.average || '8.0',
+      premiered: s.premiered || s.show?.premiered
+    }));
+  };
 
   useEffect(() => {
     fetchPublicMovies();
     checkLogin();
   }, []);
+
+  // Efek Pencarian Global (Biar nyari ke seluruh database TVMaze)
+  useEffect(() => {
+    const delaySearch = setTimeout(async () => {
+      if (searchTerm.trim() !== "") {
+        try {
+          // Nyari langsung ke API TVMaze dengan keyword
+          const res = await axios.get(`https://api.tvmaze.com/search/shows?q=${searchTerm}`);
+          setMovies(adaptData(res.data)); // Hasil search global
+        } catch (err) {
+          console.error("Search Gagal");
+        }
+      } else {
+        fetchPublicMovies(); // Balik ke dashboard acak kalau search kosong
+      }
+    }, 500); // Delay 500ms biar gak terlalu sering nembak API pas ngetik
+
+    return () => clearTimeout(delaySearch);
+  }, [searchTerm]);
 
   const checkLogin = async () => {
     try {
@@ -75,19 +113,17 @@ const App = () => {
 
   const fetchPublicMovies = async () => {
     try {
-      const resAlt = await axios.get('https://api.tvmaze.com/shows');
-      const adaptedData = resAlt.data.slice(0, 30).map(s => ({
-        id: s.id,
-        title: s.name,
-        poster_path: s.image?.original || s.image?.medium,
-        summary: s.summary,
-        genres: s.genres,
-        rating: s.rating?.average || '8.0',
-        premiered: s.premiered
-      }));
-      setMovies(adaptedData);
-    } catch (errAlt) {
-      Swal.fire('Koneksi Putus', 'Gagal memuat API luar.', 'error');
+      const res = await axios.get('https://api.tvmaze.com/shows');
+
+      // LOGIKA ACAK: Mengacak seluruh daftar film sebelum disimpan ke state
+      const allMovies = res.data;
+      const shuffled = allMovies.sort(() => 0.5 - Math.random());
+
+      // Simpan hasil acakan ke state movies
+      setMovies(adaptData(shuffled));
+      setCurrentPage(1); // Balikin ke halaman 1 setiap reload/acak baru
+    } catch (err) {
+      console.error("Gagal load API");
     }
   };
 
@@ -143,29 +179,48 @@ const App = () => {
   };
 
   // Fungsi untuk navigasi yang berfungsi
-  const handleNavClick = (tab) => {
-    setActiveTab(tab);
-    // Kamu bisa tambahkan logika fetch data spesifik di sini
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    setCurrentPage(1); // WAJIB: Reset ke halaman 1 biar datanya keliatan
   };
 
   // Fungsi untuk mendapatkan film berdasarkan tab dan pencarian
   const getDisplayMovies = () => {
-    let filtered = movies;
+    let filtered = [...movies];
 
-    // 1. Logika Tab
+    // 1. Logika Tab Trending (Filter Rating Tinggi)
     if (activeTab === 'trending') {
-      filtered = movies.filter(m => parseFloat(m.rating) >= 8.0);
+      filtered = filtered.filter(m => {
+          const ratingNum = parseFloat(m.rating);
+          return !isNaN(ratingNum) && ratingNum >= 8.0; // Ambil rating 8 ke atas
+      });
     }
 
-    // 2. Logika Cari (Filter berdasarkan teks input)
-    if (searchTerm) {
-      filtered = filtered.filter(m =>
-        m.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    // 2. Logika Filter Genre
+    if (selectedGenre !== 'All') {
+      filtered = filtered.filter(m => m.genres?.includes(selectedGenre));
     }
 
-    return filtered;
+    // 3. Logika Pagination (Potong data sesuai halaman)
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+    return filtered.slice(indexOfFirstItem, indexOfLastItem);
   };
+
+  // Hitung data yang sudah difilter (Trending + Genre) sebelum dipagination
+  const getFilteredCount = () => {
+    let temp = [...movies];
+    if (activeTab === 'trending') {
+      temp = temp.filter(m => parseFloat(m.rating) >= 8.0);
+    }
+    if (selectedGenre !== 'All') {
+      temp = temp.filter(m => m.genres?.includes(selectedGenre));
+    }
+    return temp.length;
+  };
+
+  const totalPages = Math.ceil(getFilteredCount() / itemsPerPage);
 
   if (view === 'login' || view === 'register') {
     return (
@@ -235,11 +290,11 @@ const App = () => {
 
           <nav style={styles.navLinks}>
             <span
-              onClick={() => setActiveTab('home')}
+              onClick={() => handleTabChange('home')}
               style={activeTab === 'home' ? styles.activeLink : styles.inactiveLink}
             >Home</span>
             <span
-              onClick={() => setActiveTab('trending')}
+              onClick={() => handleTabChange('trending')}
               style={activeTab === 'trending' ? styles.activeLink : styles.inactiveLink}
             >Trending</span>
           </nav>
@@ -276,6 +331,12 @@ const App = () => {
       <div style={styles.mainLayout}>
         <div style={styles.leftCol}>
           <h3 style={styles.secTitle}>🎞️ Katalog Populer</h3>
+          {/* Filter Genre Dropdown */}
+          <div style={{marginBottom: '20px'}}>
+            <select value={selectedGenre} onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }} style={{padding: '10px', borderRadius: '5px', background: '#333', color: '#fff', border: '1px solid #555'}}>
+              {genresList.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
           <div style={styles.movieGrid}>
             {getDisplayMovies()
               .map(m => (
@@ -297,6 +358,46 @@ const App = () => {
                 </div>
               </div>
             ))}
+          </div>
+          {/* UI Pagination (Angka halaman di bawah) */}
+          <div style={{marginTop: '30px', display: 'flex', justifyContent: 'center', gap: '10px'}}>
+            <button onClick={() => setCurrentPage(1)} style={{padding: '8px 12px', background: '#333', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>« First</button>
+            <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} style={{padding: '8px 12px', background: '#333', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>‹ Prev</button>
+
+            {/* Menampilkan hanya 5 angka halaman di sekitar halaman aktif */}
+            {[...Array(totalPages)].map((_, i) => {
+              const pageNum = i + 1;
+              if (
+                pageNum === 1 ||
+                pageNum === totalPages ||
+                (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
+              ) {
+                return (
+                  <button
+                    key={pageNum}
+                    className={currentPage === pageNum ? 'active' : ''}
+                    onClick={() => setCurrentPage(pageNum)}
+                    style={{
+                      padding: '8px 12px',
+                      background: currentPage === pageNum ? '#00d2ff' : '#333',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              }
+              if (pageNum === currentPage - 3 || pageNum === currentPage + 3) {
+                return <span key={pageNum}>...</span>;
+              }
+              return null;
+            })}
+
+            <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} style={{padding: '8px 12px', background: '#333', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Next ›</button>
+            <button onClick={() => setCurrentPage(totalPages)} style={{padding: '8px 12px', background: '#333', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Last »</button>
           </div>
         </div>
 
