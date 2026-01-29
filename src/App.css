@@ -1,107 +1,110 @@
-/* --- BASE STYLES --- */
-:root {
-  --primary-color: #45a29e; /* Hijau Toska Lu */
-  --bg-dark: #0b0c10;
-  --card-bg: #1f2833;
+/* --- RESET & GLOBAL STYLES --- */
+* {
+  box-sizing: border-box;
 }
 
-/* --- NAVBAR RESPONSIVE --- */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 5%;
-  background-color: var(--bg-dark);
-  color: white;
-  flex-wrap: wrap; /* Biar bisa turun ke bawah di HP */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden; /* Biar gak bisa geser kanan kiri di HP */
 }
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: bold;
+/* --- FIX MAIN LAYOUT (DESKTOP & MOBILE) --- */
+/* Mencari div yang punya style display flex dan gap 25px (Main Layout lu) */
+div[style*="display: flex"][style*="gap: 25px"] {
+  display: flex !important;
+  flex-direction: row; /* Default Desktop */
+  width: 100% !important;
+  max-width: 100vw !important;
+  padding: 10px !important;
+  margin: 0 !important;
 }
 
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-
-.search-container input {
-  padding: 8px 15px;
-  border-radius: 20px;
-  border: 1px solid #333;
-  background: #222;
-  color: white;
-}
-
-/* --- GRID FILM --- */
-.movie-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px;
-  padding: 20px;
-}
-
-/* --- MEDIA QUERIES (INI KUNCI BUAT HP) --- */
+/* --- MEDIA QUERY UNTUK HP --- */
 @media (max-width: 768px) {
-  .navbar {
-    flex-direction: column; /* Menu & Logo jadi tumpuk */
-    gap: 15px;
-    text-align: center;
+  
+  /* 1. Paksa Header Jadi Vertikal */
+  header[style*="display: flex"], 
+  div[style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    height: auto !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 20px !important;
+    padding: 20px 10px !important;
   }
 
-  .nav-links {
-    width: 100%;
-    justify-content: center;
-    order: 2; /* Menu di tengah */
+  /* 2. Navigasi (Home & Trending) */
+  nav[style*="display: flex"] {
+    justify-content: center !important;
+    width: 100% !important;
+    gap: 30px !important;
   }
 
-  .search-container {
-    width: 100%;
-    order: 3; /* Search paling bawah */
+  /* 3. Search Box & Tombol Masuk */
+  div[style*="display: flex"][style*="gap: 20px"][style*="align-items: center"] {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 15px !important;
   }
 
-  .search-container input {
-    width: 90%; /* Biar gak mentok pinggir */
+  input[style*="width: 220px"] {
+    width: 100% !important; /* Search box lebar penuh di HP */
+    max-width: 300px;
   }
 
-  /* Grid Film di HP jadi 2 kolom biar pas */
-  .movie-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 10px;
+  /* 4. MAIN CONTENT (Film & Koleksi) */
+  /* Ini yang paling penting: Paksa 'Koleksi Saya' pindah ke BAWAH Film */
+  div[style*="display: flex"][style*="gap: 25px"] {
+    flex-direction: column !important; /* Paksa tumpuk vertikal */
   }
 
-  .movie-card img {
-    height: 220px; /* Sesuaikan tinggi gambar di HP */
+  /* Kolom Kiri (Katalog Film) */
+  div[style*="flex: 3"] {
+    width: 100% !important;
+  }
+
+  /* Kolom Kanan (Koleksi Saya) */
+  div[style*="flex: 1"][style*="background: rgba(255, 255, 255, 0.03)"] {
+    width: 100% !important;
+    order: 2 !important; /* Pastikan dia di bawah */
+    margin-top: 30px !important;
+  }
+
+  /* 5. GRID FILM (Jadi 2 Kolom di HP) */
+  div[style*="display: grid"][style*="grid-template-columns: repeat(auto-fill"] {
+    grid-template-columns: repeat(2, 1fr) !important; /* 2 Film sejajar */
+    gap: 10px !important;
+  }
+
+  /* Kecilin Poster di HP */
+  img[style*="height: 240px"] {
+    height: 180px !important;
+  }
+
+  /* 6. MODAL DETAIL (Biar gak kepotong di HP) */
+  div[style*="width: 800px"] {
+    width: 95% !important;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px !important;
+  }
+
+  div[style*="display: flex"][style*="gap: 30px"] {
+    flex-direction: column !important;
+    align-items: center;
+  }
+
+  div[style*="flex: 0 0 250px"] {
+    flex: none !important;
+    width: 200px !important;
   }
 }
 
-/* --- PAGINATION STYLE (HIJAU TOSKA) --- */
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  margin: 30px 0;
-  flex-wrap: wrap; /* Biar angka halaman gak keluar layar HP */
-}
-
-.pagination-wrapper button {
-  background: #1f2833;
-  color: white;
-  border: 1px solid #45a29e;
-  padding: 5px 12px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: 0.3s;
-}
-
-.pagination-wrapper button.active {
-  background: #45a29e;
-  color: #0b0c10;
+/* --- PAGINATION STYLING --- */
+.active {
+  background: #00d2ff !important;
+  color: #000 !important;
   font-weight: bold;
-}
-
-.pagination-wrapper button:hover:not(.active) {
-  background: #45a29e33;
 }
