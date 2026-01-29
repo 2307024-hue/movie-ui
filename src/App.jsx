@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2'; 
+import './App.css';
 
 
 const apiLokal = axios.create({
