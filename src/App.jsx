@@ -22,6 +22,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedGenre, setSelectedGenre] = useState('All');
+  const [loading, setLoading] = useState(false);
   const itemsPerPage = 20; // Lu bisa atur mau berapa film per halaman
 
   // Tambahkan daftar genre yang tersedia di TVMaze
@@ -63,6 +64,13 @@ const App = () => {
 
     return () => clearTimeout(delaySearch);
   }, [searchTerm]);
+
+  // Trigger ambil data baru kalau halaman berubah
+  useEffect(() => {
+    // TVMaze pake index 0, jadi page 1 di UI kita adalah page 0 di API mereka
+    fetchPublicMovies(currentPage - 1);
+    window.scrollTo(0, 0); // Balik ke atas pas ganti page
+  }, [currentPage]);
 
   const checkLogin = async () => {
     try {
@@ -111,19 +119,24 @@ const App = () => {
     }
   };
 
-  const fetchPublicMovies = async () => {
+  const fetchPublicMovies = async (pageNumber = 0) => {
+    setLoading(true);
     try {
-      const res = await axios.get('https://api.tvmaze.com/shows');
+      // Gunakan pageNumber dari pagination buat ambil data spesifik dari TVMaze
+      const res = await axios.get(`https://api.tvmaze.com/shows?page=${pageNumber}`);
 
-      // LOGIKA ACAK: Mengacak seluruh daftar film sebelum disimpan ke state
-      const allMovies = res.data;
-      const shuffled = allMovies.sort(() => 0.5 - Math.random());
-
-      // Simpan hasil acakan ke state movies
-      setMovies(adaptData(shuffled));
-      setCurrentPage(1); // Balikin ke halaman 1 setiap reload/acak baru
+      if (res.data.length > 0) {
+        const shuffled = res.data.sort(() => 0.5 - Math.random());
+        setMovies(adaptData(shuffled));
+      } else {
+        setMovies([]); // Kosongkan kalau emang ga ada data di page itu
+      }
     } catch (err) {
-      console.error("Gagal load API");
+      console.error("API Error atau koneksi lambat");
+      // Kalau error, kasih tau user
+      Swal.fire('Waduh!', 'Koneksi lagi lemot atau API TVMaze capek, coba refresh ya.', 'warning');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,15 +201,15 @@ const App = () => {
   const getFilteredMovies = () => {
     let filtered = [...movies];
 
-    // 1. Logika Tab Trending (Rating >= 8)
+    // Filter Trending (Rating Tinggi)
     if (activeTab === 'trending') {
       filtered = filtered.filter(m => {
-        const val = parseFloat(m.rating);
-        return !isNaN(val) && val >= 8.0;
+        const r = parseFloat(m.rating);
+        return !isNaN(r) && r >= 7.5; // Gue turunin ke 7.5 biar pilihan filmnya lebih banyak muncul
       });
     }
 
-    // 2. Logika Filter Genre
+    // Filter Genre
     if (selectedGenre !== 'All') {
       filtered = filtered.filter(m => m.genres?.includes(selectedGenre));
     }
@@ -216,7 +229,7 @@ const App = () => {
   const getFilteredCount = () => {
     let temp = [...movies];
     if (activeTab === 'trending') {
-      temp = temp.filter(m => parseFloat(m.rating) >= 8.0);
+      temp = temp.filter(m => parseFloat(m.rating) >= 7.5);
     }
     if (selectedGenre !== 'All') {
       temp = temp.filter(m => m.genres?.includes(selectedGenre));
@@ -345,28 +358,34 @@ const App = () => {
               {genresList.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
-          <div style={styles.movieGrid}>
-            {getDisplayMovies()
-              .map(m => (
-              <div key={m.id} style={styles.movieCard} onClick={() => setSelectedMovie(m)}>
-                <img src={m.poster_path} style={styles.posterImg} alt={m.title} />
-                <div style={{padding:'12px'}}>
-                  <p style={styles.titleText}>{m.title}</p>
-                  <p style={{fontSize:'12px', color:'#888', marginBottom:'10px'}}>
-                    📅 {m.premiered ? m.premiered.split('-')[0] : 'TBA'} | ⭐ {m.rating}
-                  </p>
-                  <button onClick={(e) => {
-                    e.stopPropagation(); // Mencegah modal terbuka saat klik simpan
-                    protectedAction(() => {
-                      apiLokal.post('/api/movies', { tmdb_id: m.id, title: m.title, poster_path: m.poster_path })
-                      .then(() => { fetchFavorites(); Swal.fire({title: 'Disimpan!', icon: 'success', timer: 800, showConfirmButton: false}); })
-                      .catch(() => Swal.fire('Info', 'Sudah ada di koleksi!', 'info'));
-                    });
-                  }} style={styles.btnSave}>⭐ Simpan</button>
+          {loading ? (
+            <div style={{textAlign: 'center', padding: '50px', color: '#00d2ff'}}>
+              <p>Loading movies...</p>
+            </div>
+          ) : (
+            <div style={styles.movieGrid}>
+              {getDisplayMovies()
+                .map(m => (
+                <div key={m.id} style={styles.movieCard} onClick={() => setSelectedMovie(m)}>
+                  <img src={m.poster_path} style={styles.posterImg} alt={m.title} />
+                  <div style={{padding:'12px'}}>
+                    <p style={styles.titleText}>{m.title}</p>
+                    <p style={{fontSize:'12px', color:'#888', marginBottom:'10px'}}>
+                      📅 {m.premiered ? m.premiered.split('-')[0] : 'TBA'} | ⭐ {m.rating}
+                    </p>
+                    <button onClick={(e) => {
+                      e.stopPropagation(); // Mencegah modal terbuka saat klik simpan
+                      protectedAction(() => {
+                        apiLokal.post('/api/movies', { tmdb_id: m.id, title: m.title, poster_path: m.poster_path })
+                        .then(() => { fetchFavorites(); Swal.fire({title: 'Disimpan!', icon: 'success', timer: 800, showConfirmButton: false}); })
+                        .catch(() => Swal.fire('Info', 'Sudah ada di koleksi!', 'info'));
+                      });
+                    }} style={styles.btnSave}>⭐ Simpan</button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           {/* UI Pagination (Angka halaman di bawah) */}
           <div style={{marginTop: '30px', display: 'flex', justifyContent: 'center', gap: '10px'}}>
             <button onClick={() => setCurrentPage(1)} style={{padding: '8px 12px', background: '#333', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>« First</button>
