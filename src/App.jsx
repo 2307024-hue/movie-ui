@@ -185,14 +185,14 @@ const App = () => {
   };
 
   // Fungsi untuk mendapatkan film berdasarkan tab dan pencarian
-  const getDisplayMovies = () => {
+  const getFilteredMovies = () => {
     let filtered = [...movies];
 
-    // 1. Logika Tab Trending (Filter Rating Tinggi)
+    // 1. Logika Tab Trending (Rating >= 8)
     if (activeTab === 'trending') {
       filtered = filtered.filter(m => {
-          const ratingNum = parseFloat(m.rating);
-          return !isNaN(ratingNum) && ratingNum >= 8.0; // Ambil rating 8 ke atas
+        const val = parseFloat(m.rating);
+        return !isNaN(val) && val >= 8.0;
       });
     }
 
@@ -201,10 +201,14 @@ const App = () => {
       filtered = filtered.filter(m => m.genres?.includes(selectedGenre));
     }
 
-    // 3. Logika Pagination (Potong data sesuai halaman)
+    return filtered;
+  };
+
+  // Fungsi buat nampilin data yang sudah di-slice per halaman
+  const getDisplayMovies = () => {
+    const filtered = getFilteredMovies();
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   };
 
@@ -220,7 +224,11 @@ const App = () => {
     return temp.length;
   };
 
-  const totalPages = Math.ceil(getFilteredCount() / itemsPerPage);
+  // Kalau di Home, kita set total halaman banyak (misal 3430)
+  // Kalau di Trending/Genre, kita itung dari data yang difilter
+  const totalPages = (activeTab === 'home' && selectedGenre === 'All')
+    ? 3430
+    : Math.ceil(getFilteredCount() / itemsPerPage);
 
   if (view === 'login' || view === 'register') {
     return (
