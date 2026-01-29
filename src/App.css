@@ -1,1 +1,107 @@
+/* --- BASE STYLES --- */
+:root {
+  --primary-color: #45a29e; /* Hijau Toska Lu */
+  --bg-dark: #0b0c10;
+  --card-bg: #1f2833;
+}
 
+/* --- NAVBAR RESPONSIVE --- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background-color: var(--bg-dark);
+  color: white;
+  flex-wrap: wrap; /* Biar bisa turun ke bawah di HP */
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.search-container input {
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: #222;
+  color: white;
+}
+
+/* --- GRID FILM --- */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+/* --- MEDIA QUERIES (INI KUNCI BUAT HP) --- */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column; /* Menu & Logo jadi tumpuk */
+    gap: 15px;
+    text-align: center;
+  }
+
+  .nav-links {
+    width: 100%;
+    justify-content: center;
+    order: 2; /* Menu di tengah */
+  }
+
+  .search-container {
+    width: 100%;
+    order: 3; /* Search paling bawah */
+  }
+
+  .search-container input {
+    width: 90%; /* Biar gak mentok pinggir */
+  }
+
+  /* Grid Film di HP jadi 2 kolom biar pas */
+  .movie-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .movie-card img {
+    height: 220px; /* Sesuaikan tinggi gambar di HP */
+  }
+}
+
+/* --- PAGINATION STYLE (HIJAU TOSKA) --- */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 30px 0;
+  flex-wrap: wrap; /* Biar angka halaman gak keluar layar HP */
+}
+
+.pagination-wrapper button {
+  background: #1f2833;
+  color: white;
+  border: 1px solid #45a29e;
+  padding: 5px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: 0.3s;
+}
+
+.pagination-wrapper button.active {
+  background: #45a29e;
+  color: #0b0c10;
+  font-weight: bold;
+}
+
+.pagination-wrapper button:hover:not(.active) {
+  background: #45a29e33;
+}
