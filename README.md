@@ -152,17 +152,26 @@ Tampilan dashboard setelah login dengan nama user muncul di header.
 ![Delete](./public/img/gambar12.png)
 ![Delete](./public/img/gambar13.png)
 
+* **Tampilan Responsive (Mobile)**: Penyesuaian tata letak aplikasi agar tetap fungsional saat diakses melalui perangkat smartphone.
+![Mobile View](./public/img/gambar26.png)
+
+---
+
 ## 📸 Database Proof (Data Integrity)
 ### Struktur Tabel & Data Lokal
 ![Database](./public/img/gambar19.png)
 ![Database](./public/img/gambar20.png)
+
+---
 
 ### B. Proses Deployment (Vercel)
 ### 1. Frontend (Live on Vercel)
 Antarmuka pengguna telah di-deploy ke **Vercel** untuk menunjukkan kualitas UI/UX, responsivitas, dan keberhasilan integrasi dengan **Public API (TVMaze)** secara real-time.
 * **Status:** Active 🟢
 ![https://movie-ui-kappa.vercel.app](./public/img/gambar18.png)
+
 ---
+
 ### 2. Backend & Database (Local Server)
 Sisi Backend (Laravel) dan Database (MySQL) dijalankan pada server lokal (Localhost) dengan alasan:
 * **Data Privacy:** Menjaga integritas data user dan koleksi pribadi di lingkungan lokal.
