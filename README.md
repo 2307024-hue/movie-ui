@@ -13,7 +13,7 @@ YaraFilm adalah aplikasi web katalog film modern yang mengintegrasikan data dari
 
 ## 🚀 Tautan Live Project
 Layanan Frontend telah online dan dapat diakses publik:
-👉 **[https://movie-ui-kappa.vercel.app](https://movie-ui-kappa.vercel.app)**
+👉 **[https://movie-ui-kappa.vercel.app]
 
 ---
 
@@ -112,13 +112,15 @@ Project ini dideploy dengan langkah-langkah berikut:
 ### A. Tampilan Desktop & Mobile
 * **Desktop**: Navigasi di atas, Katalog Film di kiri, dan Koleksi Saya di kanan.
 1. **Dashboard & Search**
-Menampilkan katalog film utama dan fitur pencarian.
+Menampilkan katalog film utama genre dan fitur pencarian.
 ![Dashboard](./public/img/gambar1.png)
+![Dashboard](./public/img/gambar15.png)
+![Dashboard](./public/img/gambar16.png)
 
 2. **Proteksi Fitur (Login Required)**
 Muncul notifikasi "Login Dulu Yuk!" saat mencoba simpan film tanpa akun.
 ![Login Alert](./public/img/gambar2.png) 
-              (./public/img/gambar3.png)
+![Login Alert](./public/img/gambar3.png)
 
 3. **Halaman Registrasi**
 Form pendaftaran user baru ke database MySQL.
@@ -130,19 +132,36 @@ Form masuk untuk user yang sudah terdaftar.
 
 5. **Login Berhasil**
 Tampilan dashboard setelah login dengan nama user muncul di header.
-![Berhasil Login](./public/img/gambar14.png)(./public/img/gambar6.png)
-* **Mobile**: Semua elemen tumpuk vertikal secara otomatis (Responsif).
+![Berhasil Login](./public/img/gambar6.png)
+![Berhasil Login](./public/img/gambar14.png)
 
+6. **Menyimpan Film (Create)**: User menambahkan film favorit ke daftar koleksi pribadi dengan notifikasi sukses.
+![Detail](./public/img/gambar17.png)
+![Simpan](./public/img/gambar8.png)
+
+7. **Tampilan Koleksi Saya (Read)**: Menampilkan daftar film yang berhasil ditarik dari database lokal (MySQL) 
+![Koleksi](./public/img/gambar9.png)
+
+8. **Update Catatan (Update)**: Fitur untuk menambahkan atau mengubah kesan/pesan pribadi pada film yang telah disimpan.
+![Update](./public/img/gambar10.png)
+
+9. **Bukti Database Lokal**: Tampilan tabel `movies` pada **phpMyAdmin** yang membuktikan data tersimpan secara permanen.
+![Database](./public/img/gambar11.png)
+
+10 **Hapus Koleksi (Delete)**: Menghapus data film dari daftar favorit baik di tampilan UI maupun di database.
+![Delete](./public/img/gambar12.png)
+![Delete](./public/img/gambar13.png)
 
 ## 📸 Database Proof (Data Integrity)
 ### Struktur Tabel & Data Lokal
-![Database](assets/ss-database.png)
+![Database](./public/img/gambar19.png)
+![Database](./public/img/gambar20.png)
 
 ### B. Proses Deployment (Vercel)
 ### 1. Frontend (Live on Vercel)
 Antarmuka pengguna telah di-deploy ke **Vercel** untuk menunjukkan kualitas UI/UX, responsivitas, dan keberhasilan integrasi dengan **Public API (TVMaze)** secara real-time.
 * **Status:** Active 🟢
-* **URL:** [MASUKKAN_LINK_VERCEL_LU_DI_SINI]
+![https://movie-ui-kappa.vercel.app](./public/img/gambar18.png)
 ---
 ### 2. Backend & Database (Local Server)
 Sisi Backend (Laravel) dan Database (MySQL) dijalankan pada server lokal (Localhost) dengan alasan:
