@@ -115,7 +115,7 @@ Project ini dideploy dengan langkah-langkah berikut:
 * **Mobile**: Semua elemen tumpuk vertikal secara otomatis (Responsif).
 
 **Dashboard & Search**
-![Dashboard](assets/ss-dashboard.png)
+![Dashboard](public\img\gambar13.png)
 ### Modal Detail (API Data)
 ![Detail](assets/ss-detail.png)
 ### Personal Collection (CRUD)
