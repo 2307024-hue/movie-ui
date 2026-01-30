@@ -111,60 +111,60 @@ Project ini dideploy dengan langkah-langkah berikut:
 
 ### A. Tampilan Desktop & Mobile
 * **Desktop**: Navigasi di atas, Katalog Film di kiri, dan Koleksi Saya di kanan.
-## 1. Dashboard & Search
+### 1. Dashboard & Search
 Menampilkan katalog film utama genre dan fitur pencarian.
 ![Dashboard](./public/img/gambar1.png)
 ![Dashboard](./public/img/gambar15.png)
 ![Dashboard](./public/img/gambar16.png)
 ![Dashboard](./public/img/gambar27.png)
 
-## 2. Proteksi Fitur (Login Required)
+### 2. Proteksi Fitur (Login Required)
 Muncul notifikasi "Login Dulu Yuk!" saat mencoba simpan film tanpa akun.
 ![Login Alert](./public/img/gambar2.png) 
 ![Login Alert](./public/img/gambar3.png)
 
-## 3. Halaman Registrasi
+### 3. Halaman Registrasi
 Form pendaftaran user baru ke database MySQL.
 ![Register](./public/img/gambar4.png)
 
-## 4. Halaman Login
+### 4. Halaman Login
 Form masuk untuk user yang sudah terdaftar.
 ![Login](./public/img/gambar5.png)
 
-## 5. Login Berhasil
+### 5. Login Berhasil
 Tampilan dashboard setelah login dengan nama user muncul di header.
 ![Berhasil Login](./public/img/gambar6.png)
 ![Berhasil Login](./public/img/gambar14.png)
 
-## 6. Menyimpan Film (Create)
+### 6. Menyimpan Film (Create)
  User menambahkan film favorit ke daftar koleksi pribadi dengan notifikasi sukses.
 ![Detail](./public/img/gambar17.png)
 ![Simpan](./public/img/gambar8.png)
 
-## 7. Tampilan Koleksi Saya (Read)
+### 7. Tampilan Koleksi Saya (Read)
 Menampilkan daftar film yang berhasil ditarik dari database lokal (MySQL) 
 ![Koleksi](./public/img/gambar9.png)
 
-## 8. Update Catatan (Update)
+### 8. Update Catatan (Update)
 Fitur untuk menambahkan atau mengubah kesan/pesan pribadi pada film yang telah disimpan.
 ![Update](./public/img/gambar10.png)
 
-## 9. Bukti Database Lokal
+### 9. Bukti Database Lokal
 Tampilan tabel `movies` pada **phpMyAdmin** yang membuktikan data tersimpan secara permanen.
 ![Database](./public/img/gambar11.png)
 
-## 10. Hapus Koleksi (Delete)
+### 10. Hapus Koleksi (Delete)
 Menghapus data film dari daftar favorit baik di tampilan UI maupun di database.
 ![Delete](./public/img/gambar12.png)
 ![Delete](./public/img/gambar13.png)
 
-## * Tampilan Responsive (Mobile)
+### * Tampilan Responsive (Mobile)
 Penyesuaian tata letak aplikasi agar tetap fungsional saat diakses melalui perangkat smartphone.
 ![Mobile View](./public/img/gambar26.png)
 
 ---
 
-## 📸 Database Proof (Data Integrity)
+### 📸 Database Proof (Data Integrity)
 ### Struktur Tabel & Data Lokal
 ![Database](./public/img/gambar19.png)
 ![Database](./public/img/gambar20.png)
@@ -174,7 +174,7 @@ Penyesuaian tata letak aplikasi agar tetap fungsional saat diakses melalui peran
 ### B. Proses Deployment (Vercel)
 ### 1. Frontend (Live on Vercel)
 Antarmuka pengguna telah di-deploy ke **Vercel** untuk menunjukkan kualitas UI/UX, responsivitas, dan keberhasilan integrasi dengan **Public API (TVMaze)** secara real-time.
-* ## Status:** Active 🟢
+### * Status:** Active 🟢
 ![https://movie-ui-kappa.vercel.app](./public/img/gambar18.png)
 
 ---
