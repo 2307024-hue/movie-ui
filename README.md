@@ -111,9 +111,10 @@ Project ini dideploy dengan langkah-langkah berikut:
 
 ### A. Tampilan Desktop & Mobile
 * **Desktop**: Navigasi di atas, Katalog Film di kiri, dan Koleksi Saya di kanan.
+    (public\img\gambar1.png)
 * **Mobile**: Semua elemen tumpuk vertikal secara otomatis (Responsif).
 
-### Dashboard & Search
+**Dashboard & Search**
 ![Dashboard](assets/ss-dashboard.png)
 ### Modal Detail (API Data)
 ![Detail](assets/ss-detail.png)
