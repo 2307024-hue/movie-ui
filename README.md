@@ -117,7 +117,8 @@ Menampilkan katalog film utama dan fitur pencarian.
 
 2. **Proteksi Fitur (Login Required)**
 Muncul notifikasi "Login Dulu Yuk!" saat mencoba simpan film tanpa akun.
-![Login Alert](./public/img/gambar3.png)
+![Login Alert](./public/img/gambar2.png) 
+              (./public/img/gambar3.png)
 
 3. **Halaman Registrasi**
 Form pendaftaran user baru ke database MySQL.
@@ -129,7 +130,7 @@ Form masuk untuk user yang sudah terdaftar.
 
 5. **Login Berhasil**
 Tampilan dashboard setelah login dengan nama user muncul di header.
-![Berhasil Login](./public/img/gambar6.png)
+![Berhasil Login](./public/img/gambar14.png)(./public/img/gambar6.png)
 * **Mobile**: Semua elemen tumpuk vertikal secara otomatis (Responsif).
 
 
