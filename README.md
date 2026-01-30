@@ -13,7 +13,7 @@ YaraFilm adalah aplikasi web katalog film modern yang mengintegrasikan data dari
 
 ## 🚀 Tautan Live Project
 Layanan Frontend telah online dan dapat diakses publik:
-👉 **[https://movie-ui-kappa.vercel.app]
+👉 [https://movie-ui-kappa.vercel.app]
 
 ---
 
@@ -137,7 +137,7 @@ Tampilan dashboard setelah login dengan nama user muncul di header.
 ![Berhasil Login](./public/img/gambar14.png)
 
 ### 6. Menyimpan Film (Create)
- User menambahkan film favorit ke daftar koleksi pribadi dengan notifikasi sukses.
+User menambahkan film favorit ke daftar koleksi pribadi dengan notifikasi sukses.
 ![Detail](./public/img/gambar17.png)
 ![Simpan](./public/img/gambar8.png)
 
